@@ -5,11 +5,16 @@ const FIRST_MAJOR_WITHOUT_MINIMUM = 24;
 
 /** Message à afficher si cette version de Node est trop ancienne ; undefined sinon. */
 export const unsupportedNodeMessage = (version: string = process.versions.node): string | undefined => {
-  const [major = 0, minor = 0] = version.split(".").map(Number);
-  const minimumMinor = MINIMUM_MINOR_BY_MAJOR[major];
+  const normalizedVersion = version.trim().replace(/^v/i, "");
+  const [majorPart = "0", minorPart = "0"] = normalizedVersion.split(".");
+  const major = Number.parseInt(majorPart.replace(/[^0-9].*$/, ""), 10);
+  const minor = Number.parseInt(minorPart.replace(/[^0-9].*$/, ""), 10);
+  const minimumMinor = MINIMUM_MINOR_BY_MAJOR[major] ?? 0;
 
   const isSupported =
-    major >= FIRST_MAJOR_WITHOUT_MINIMUM || (minimumMinor !== undefined && minor >= minimumMinor);
+    major >= FIRST_MAJOR_WITHOUT_MINIMUM ||
+    (major in MINIMUM_MINOR_BY_MAJOR && minor >= minimumMinor);
+
   if (isSupported) return undefined;
 
   return [
