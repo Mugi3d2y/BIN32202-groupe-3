@@ -18,6 +18,48 @@ const visibilityFilter = (viewer: User): OfferFilter => {
 
 export const createOffersService = (repository: OffersRepository) => ({
   listOffers: (viewer: User): Offer[] => repository.findAll(visibilityFilter(viewer)).map(toOffer),
+  applyToOffer: (
+    viewer: User,
+    offerId: number,
+    message?: string,
+  ): { id: number; offerId: number; studentId: number; message: string | null; status: "IN_PROGRESS" } => {
+    if (!isStudent(viewer)) {
+      throw new HttpError(403, "FORBIDDEN", "Seuls les étudiants peuvent candidater");
+    }
+
+    const offer = repository.findById(offerId);
+    if (!offer) {
+      throw new HttpError(404, "NOT_FOUND", "Offre introuvable");
+    }
+
+    if (offer.status === "SUBMITTED" || offer.status === "PENDING") {
+      throw new HttpError(409, "CONFLICT", "Cette offre n'est pas ouverte aux candidatures");
+    }
+
+    if (repository.findActiveApplication(offerId, viewer.id)) {
+      throw new HttpError(409, "CONFLICT", "Vous avez déjà une candidature active pour cette offre");
+    }
+
+    const latestApplication = repository.findApplicationForStudent(offerId, viewer.id);
+    if (
+      (offer.status === "ASSIGNED" || offer.status === "ARCHIVED") &&
+      (!latestApplication || latestApplication.status === "IN_PROGRESS")
+    ) {
+      throw new HttpError(
+        409,
+        "CONFLICT",
+        "Cette offre n'est plus ouverte aux candidatures pour ce profil",
+      );
+    }
+
+    const normalizedMessage = typeof message === "string" ? message.trim() : "";
+
+    return repository.createApplication({
+      offerId,
+      studentId: viewer.id,
+      message: normalizedMessage === "" ? null : normalizedMessage,
+    });
+  },
 });
 
 export type OffersService = ReturnType<typeof createOffersService>;
