@@ -17,3 +17,5 @@ export const hasContactRole = (user: User, role: ContactRole): boolean =>
  */
 export const canListOffers = (user: User): boolean =>
   isAdmin(user) || isStudent(user) || hasContactRole(user, "DEPOSITOR");
+
+export const canApplyToOffer = (user: User): boolean => isStudent(user);

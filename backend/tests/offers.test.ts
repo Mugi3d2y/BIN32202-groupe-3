@@ -1,6 +1,6 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ADMINISTRATOR, CONTACT, OFFER, STUDENT } from "../src/db/seed/seedIds.ts";
+import { ADMINISTRATOR, APPLICATION, CONTACT, OFFER, STUDENT } from "../src/db/seed/seedIds.ts";
 import type { UserKind } from "../src/models/user.ts";
 import { createTestApp, tokenFor } from "./helpers/testApp.ts";
 
@@ -95,5 +95,78 @@ describe("GET /offers : visibilité selon le profil", () => {
     expect(Object.keys(response.body[0]).sort()).toEqual(
       ["academicYear", "companyShortName", "id", "period", "status", "title"],
     );
+  });
+});
+
+describe("POST /offers/:id/apply : EF-32", () => {
+  it("crée une candidature pour une offre publiée avec un message facultatif", async () => {
+    const response = await request(app)
+      .post(`/offers/${OFFER.INTERNAL_CHATBOT}/apply`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT))
+      .send({ message: "Je suis motivé par ce sujet." });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      offerId: OFFER.INTERNAL_CHATBOT,
+      studentId: STUDENT.LUCAS_DUPONT,
+      status: "IN_PROGRESS",
+      message: "Je suis motivé par ce sujet.",
+    });
+  });
+
+  it("refuse une double candidature active sur la même offre", async () => {
+    const response = await request(app)
+      .post(`/offers/${OFFER.FLEET_APP}/apply`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT))
+      .send({ message: "Je souhaite candidater à nouveau." });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("CONFLICT");
+  });
+
+  it("autorise une nouvelle candidature après une sélection ou un refus", async () => {
+    const response = await request(app)
+      .post(`/offers/${OFFER.CLOUD_MIGRATION}/apply`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.MATEUSZ_KOWALSKI))
+      .send();
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      offerId: OFFER.CLOUD_MIGRATION,
+      studentId: STUDENT.MATEUSZ_KOWALSKI,
+      status: "IN_PROGRESS",
+      message: null,
+    });
+  });
+});
+
+describe("EF-33 : candidatures de l'étudiant", () => {
+  it("affiche les candidatures de l'étudiant avec leur statut", async () => {
+    const response = await request(app)
+      .get("/applications")
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          offerId: OFFER.FLEET_APP,
+          studentId: STUDENT.LUCAS_DUPONT,
+          status: "IN_PROGRESS",
+        }),
+      ]),
+    );
+  });
+
+  it("retire une candidature active", async () => {
+    const response = await request(app)
+      .patch(`/applications/${APPLICATION.LUCAS_FLEET_APP}/withdraw`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: APPLICATION.LUCAS_FLEET_APP,
+      status: "WITHDRAWN",
+    });
   });
 });
