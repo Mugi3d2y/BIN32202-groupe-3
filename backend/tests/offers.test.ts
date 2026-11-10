@@ -138,6 +138,17 @@ describe("POST /offers/:id/apply : EF-32", () => {
       message: null,
     });
   });
+
+  it("refuse une candidature sur une offre non publiée", async () => {
+    const response = await request(app)
+      .post(`/offers/${OFFER.PDF_REPORTS}/apply`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT))
+      .send({ message: "Je tente une candidature impossible." });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("CONFLICT");
+    expect(response.body.error.message).toMatch(/n'est (pas|plus) ouverte aux candidatures/i);
+  });
 });
 
 describe("EF-33 : candidatures de l'étudiant", () => {
@@ -156,6 +167,16 @@ describe("EF-33 : candidatures de l'étudiant", () => {
         }),
       ]),
     );
+  });
+
+  it("refuse le retrait d'une candidature déjà traitée", async () => {
+    const response = await request(app)
+      .patch(`/applications/${APPLICATION.LEA_CLOUD_MIGRATION}/withdraw`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LEA_MERTENS));
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("CONFLICT");
+    expect(response.body.error.message).toMatch(/ne peut plus être retirée|déjà traitée/i);
   });
 
   it("retire une candidature active", async () => {
