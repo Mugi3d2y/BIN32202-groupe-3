@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seance 8 - Harnais agentique, guides et senseurs</title>
+    <style>
+        :root {
+            --bg: #f7f5ef;
+            --paper: #fffdf9;
+            --ink: #132f45;
+            --muted: #4b6171;
+            --line: #d8dde3;
+            --guide: #c47b3a;
+            --sensor: #554da6;
+            --ok: #24683e;
+            --warn: #9b6a1d;
+            --no: #8d3434;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--ink);
+            line-height: 1.42;
+            background:
+                radial-gradient(circle at 0 0, #fff8ed 0, transparent 30%),
+                radial-gradient(circle at 100% 0, #f0effd 0, transparent 35%),
+                var(--bg);
+        }
+
+        main {
+            max-width: 1240px;
+            margin: 1.2rem auto 2rem;
+            padding: 0.9rem;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #fff9f0 0%, #fcf9ff 100%);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 1rem 1.1rem;
+            box-shadow: 0 8px 22px rgba(20, 32, 50, 0.08);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+        }
+
+        .intro {
+            margin: 0.55rem 0 0;
+            color: var(--muted);
+        }
+
+        .chips {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+        }
+
+        .chip {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 0.2rem 0.7rem;
+            background: #fff;
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            margin: 1.2rem 0 0.55rem;
+            font-size: 1.15rem;
+        }
+
+        .card {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 0.85rem;
+        }
+
+        .matrix-axes {
+            display: grid;
+            grid-template-columns: 180px 1fr 1fr;
+            gap: 0.65rem;
+            align-items: stretch;
+        }
+
+        .axis {
+            border-radius: 8px;
+            color: #fff;
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            padding: 0.65rem;
+        }
+
+        .axis.guide {
+            background: var(--guide);
+        }
+
+        .axis.sensor {
+            background: var(--sensor);
+        }
+
+        .row-label {
+            border: 1px dashed #c5d1db;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 700;
+            padding: 0.7rem 0.5rem;
+            background: #edf3f7;
+        }
+
+        .cell {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff;
+            padding: 0.6rem;
+        }
+
+        .cell.guide {
+            background: #fff8f2;
+            border-color: #efc7a6;
+        }
+
+        .cell.sensor {
+            background: #f7f6ff;
+            border-color: #d7d3fa;
+        }
+
+        .item {
+            border: 1px solid #e3e9ef;
+            border-radius: 7px;
+            background: #fff;
+            padding: 0.48rem 0.6rem;
+            margin: 0.45rem 0;
+            font-size: 0.93rem;
+        }
+
+        .table-wrap {
+            margin-top: 0.55rem;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--paper);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1040px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--line);
+            padding: 0.62rem;
+            text-align: left;
+            vertical-align: top;
+            font-size: 0.93rem;
+        }
+
+        th {
+            background: #edf1f6;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.03em;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 0.13rem 0.58rem;
+            font-weight: 700;
+            font-size: 0.78rem;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+
+        .ok {
+            color: var(--ok);
+            border-color: #8fd0a6;
+            background: #eaf8ef;
+        }
+
+        .warn {
+            color: var(--warn);
+            border-color: #e6c68f;
+            background: #fff7e8;
+        }
+
+        .no {
+            color: var(--no);
+            border-color: #e7b0b0;
+            background: #fdeeee;
+        }
+
+        code {
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.9em;
+            background: #f2f5f8;
+            border: 1px solid #dde5ec;
+            border-radius: 5px;
+            padding: 0.08rem 0.32rem;
+        }
+
+        ul {
+            margin: 0.35rem 0 0;
+            padding-left: 1.1rem;
+        }
+
+        li {
+            margin: 0.28rem 0;
+        }
+
+        .footnote {
+            margin-top: 0.8rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--line);
+            padding-top: 0.7rem;
+        }
+
+        @media (max-width: 980px) {
+            .matrix-axes {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                min-width: 860px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <section class="hero">
+            <h1>Seance 8 - Harnais agentique : guides et senseurs</h1>
+            <p class="intro">
+                Objectif de la seance: distinguer clairement une instruction (guide/feedforward) d'un controle
+                (senseur/feedback), verifier ce qui est reellement couvert par les tests, et expliciter les limites.
+            </p>
+            <div class="chips">
+                <span class="chip">Projet: Gesta</span>
+                <span class="chip">Exigences ciblees precedente seance: EF-32, EF-33</span>
+                <span class="chip">Date de verification: 2026-11-10</span>
+            </div>
+        </section>
+
+        <section>
+            <h2>1) Reperage des guides et des senseurs</h2>
+            <div class="card">
+                <div class="matrix-axes" aria-label="Matrice 2x2 guide-senseur">
+                    <div></div>
+                    <div class="axis guide">Guide - feedforward</div>
+                    <div class="axis sensor">Senseur - feedback</div>
+
+                    <div class="row-label">Inferentiel<br />(interprete par une IA)</div>
+                    <div class="cell guide">
+                        <div class="item"><strong>AGENTS.md</strong><br />Conventions de structure, couches backend et
+                            pratiques de changement.</div>
+                        <div class="item"><strong>Prompt de seance</strong><br />Consignes de sortie: distinguer
+                            guide/senseur et produire une tracabilite.</div>
+                        <div class="item"><strong>Cahier des
+                                charges</strong><br /><code>docs/cdc_gesta_developpement.md</code> oriente les exigences
+                            (EF-32/EF-33).</div>
+                    </div>
+                    <div class="cell sensor">
+                        <div class="item"><strong>Revue IA du diff</strong><br />Retour qualitatif sur coherence du
+                            changement avec les consignes.</div>
+                        <div class="item"><strong>Revue IA des exigences</strong><br />Controle si les tests cites
+                            correspondent bien aux exigences visees.</div>
+                    </div>
+
+                    <div class="row-label">Computationnel<br />(regles executables)</div>
+                    <div class="cell guide">
+                        <div class="item"><strong>Scripts npm workspace</strong><br /><code>package.json</code>:
+                            <code>setup</code>, <code>dev</code>, <code>check</code>.</div>
+                        <div class="item"><strong>Generateurs
+                                DB</strong><br /><code>backend/src/db/scripts/init.ts</code> et <code>reset.ts</code>
+                            pour initialiser l'etat testable.</div>
+                    </div>
+                    <div class="cell sensor">
+                        <div class="item"><strong>Tests backend</strong><br /><code>backend/tests/offers.test.ts</code>,
+                            <code>backend/tests/db/seed.test.ts</code>.</div>
+                        <div class="item"><strong>Tests
+                                frontend</strong><br /><code>frontend/tests/OffersPage.test.tsx</code>.</div>
+                        <div class="item"><strong>Senseurs configures</strong><br /><code>npm run lint</code>,
+                            <code>npm run typecheck</code>, LSP VS Code, E2E Playwright.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>1.b) Fiche detaillee des mecanismes reels</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Nom du mecanisme</th>
+                            <th>Fichier / outil</th>
+                            <th>Ce qu'il demande / impose / verifie</th>
+                            <th>Exemple concret</th>
+                            <th>Statut pendant la seance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Guide inferentiel</td>
+                            <td>Conventions agent</td>
+                            <td><code>AGENTS.md</code></td>
+                            <td>Impose une architecture par couches et des pratiques de modification.</td>
+                            <td>Business rules dans services, pas dans controllers.</td>
+                            <td><span class="badge ok">consulte et verifie</span></td>
+                        </tr>
+                        <tr>
+                            <td>Guide inferentiel</td>
+                            <td>Exigences metier</td>
+                            <td><code>docs/cdc_gesta_developpement.md</code></td>
+                            <td>Definit EF-32 et EF-33, plus RG-03/RG-04 autour des candidatures.</td>
+                            <td>EF-32: candidature sur offre publiee avec message facultatif.</td>
+                            <td><span class="badge ok">consulte et verifie</span></td>
+                        </tr>
+                        <tr>
+                            <td>Guide computationnel</td>
+                            <td>Scripts standardises</td>
+                            <td><code>package.json</code> (root + workspaces)</td>
+                            <td>Cadre executable du workflow (installer, tester, verifier).</td>
+                            <td><code>npm ci</code> puis <code>npm run test -w backend -- tests/offers.test.ts</code>.
+                            </td>
+                            <td><span class="badge ok">execute</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senseur computationnel</td>
+                            <td>Tests backend candidature</td>
+                            <td><code>backend/tests/offers.test.ts</code></td>
+                            <td>Verifie creation, doublon, recandidature, listing et retrait.</td>
+                            <td>"retire une candidature active" -> statut <code>WITHDRAWN</code>.</td>
+                            <td><span class="badge ok">execute (15/15)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senseur computationnel</td>
+                            <td>Tests seed/coherence</td>
+                            <td><code>backend/tests/db/seed.test.ts</code></td>
+                            <td>Verifie statuts candidature et coherence regles/relations.</td>
+                            <td>Cas: offre attribuee a au plus une candidature retenue.</td>
+                            <td><span class="badge ok">execute (20/20)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senseur computationnel</td>
+                            <td>Tests frontend offres</td>
+                            <td><code>frontend/tests/OffersPage.test.tsx</code></td>
+                            <td>Verifie bouton candidater, message facultatif, erreurs 401/403.</td>
+                            <td>Test: "permet d'ajouter un message facultatif".</td>
+                            <td><span class="badge ok">execute (7/7)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senseur computationnel</td>
+                            <td>E2E candidature</td>
+                            <td><code>e2e/candidature-offre.spec.ts</code></td>
+                            <td>Scenario bout en bout (postuler, consulter, retrait, doublon).</td>
+                            <td>Cas 4: refus double candidature avec statut 409.</td>
+                            <td><span class="badge warn">decrit/configure</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senseur computationnel</td>
+                            <td>Lint / Typecheck / LSP</td>
+                            <td><code>npm run lint</code>, <code>npm run typecheck</code>, IDE</td>
+                            <td>Detecte erreurs statiques et incoherences de typage.</td>
+                            <td>Blocage si erreur TS ou regle lint.</td>
+                            <td><span class="badge warn">configure, non execute ici</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senseur inferentiel</td>
+                            <td>Revue IA</td>
+                            <td>Copilot Chat (session)</td>
+                            <td>Produit un feedback argumente sur coverage et ecarts.</td>
+                            <td>Signalement explicite des limites de couverture EF.</td>
+                            <td><span class="badge ok">utilise</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>2) Premiere partie - Couverture des tests (tracabilite exigences)</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Exigence (seance precedente)</th>
+                            <th>Test(s) qui la verifient reellement</th>
+                            <th>Evidence de resultat</th>
+                            <th>Niveau de couverture</th>
+                            <th>Statut seance 8</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>EF-32: candidater a une offre publiee avec message facultatif</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/offers.test.ts</code>: "cree une candidature ... message
+                                        facultatif"</li>
+                                    <li><code>frontend/tests/OffersPage.test.tsx</code>: "permet d'ajouter un message
+                                        facultatif"</li>
+                                </ul>
+                            </td>
+                            <td>API: 201 + statut <code>IN_PROGRESS</code>. UI: message transmis dans la requete.</td>
+                            <td><span class="badge ok">forte</span></td>
+                            <td><span class="badge ok">verifiee (tests executes)</span></td>
+                        </tr>
+                        <tr>
+                            <td>EF-32: bloquer une double candidature active</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/offers.test.ts</code>: "refuse une double candidature
+                                        active"</li>
+                                    <li><code>e2e/candidature-offre.spec.ts</code>: Cas 4 (configure)</li>
+                                </ul>
+                            </td>
+                            <td>Backend: retour 409 CONFLICT sur seconde tentative.</td>
+                            <td><span class="badge ok">forte (backend)</span></td>
+                            <td><span class="badge warn">partielle (E2E non lance)</span></td>
+                        </tr>
+                        <tr>
+                            <td>EF-33: consulter ses candidatures et leurs statuts</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/offers.test.ts</code>: "affiche les candidatures ... avec
+                                        leur statut"</li>
+                                    <li><code>e2e/candidature-offre.spec.ts</code>: Cas 3 (configure)</li>
+                                </ul>
+                            </td>
+                            <td>GET <code>/applications</code> retourne la candidature avec statut attendu.</td>
+                            <td><span class="badge ok">correcte (API)</span></td>
+                            <td><span class="badge warn">partielle (UI E2E non lancee)</span></td>
+                        </tr>
+                        <tr>
+                            <td>EF-32/EF-33: retrait d'une candidature non traitee</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/offers.test.ts</code>: "retire une candidature active"</li>
+                                    <li><code>e2e/candidature-offre.spec.ts</code>: Cas 5/6 (configure)</li>
+                                </ul>
+                            </td>
+                            <td>PATCH withdraw -> statut retourne <code>WITHDRAWN</code>.</td>
+                            <td><span class="badge ok">correcte (API)</span></td>
+                            <td><span class="badge warn">partielle (non traitee E2E non prouvee)</span></td>
+                        </tr>
+                        <tr>
+                            <td>RG-04: coherence offre attribuee / candidature retenue / stage</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/db/seed.test.ts</code>: coherence metier du seed</li>
+                                </ul>
+                            </td>
+                            <td>Test seed passe sur unicite candidature retenue et existence du stage.</td>
+                            <td><span class="badge warn">indirecte</span></td>
+                            <td><span class="badge ok">verifiee (seed execute)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="footnote">
+                Commandes executees pendant la seance: <code>npm ci</code>,
+                <code>npm run test -w backend -- tests/offers.test.ts</code>,
+                <code>npm run test -w backend -- tests/db/seed.test.ts</code>,
+                <code>npm run test -w frontend -- tests/OffersPage.test.tsx</code>.
+            </p>
+        </section>
+        <section>
+            <h2>3) Tests non courverts</h2>
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>Exigence (seance precedente)</th>
+                        <th>Fichier concerné</th>
+                    </tr>
+                    <tbody>
+                        <tr>
+                            <td>Refus d'une candidature sur une offre non publiée.</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/offer.test.ts</code>: </li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Refuse le retrait d'une candidature déjà traitée</td>
+                            <td>
+                                <ul>
+                                    <li><code>backend/tests/offer.test.ts</code></li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section>
+            <h2>Limites de l'analyse</h2>
+            <div class="card">
+                <ul>
+                    <li>Les scenarios Playwright existent mais n'ont pas ete executes dans cette seance.</li>
+                    <li>Les senseurs statiques globaux (<code>lint</code>, <code>typecheck</code>) ne sont pas relances
+                        ici.</li>
+                    <li>La tracabilite couvre surtout EF-32/EF-33 (travail de la seance precedente), pas l'ensemble des
+                        EF du cahier des charges.</li>
+                    <li>La revue inferentielle IA est qualitative: elle aide, mais ne remplace pas un senseur
+                        executable.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
