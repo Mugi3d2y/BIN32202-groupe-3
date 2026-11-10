@@ -1,5 +1,5 @@
 Combien de crédits d'IA consommés ?
- - 11,3%
+ - 11,6%
 
 Choix faits :
     Garder la candidature avec un status WITHDRAWN.
