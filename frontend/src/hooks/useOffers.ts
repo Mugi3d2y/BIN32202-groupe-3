@@ -7,15 +7,17 @@ import { isUnauthorized } from "../utils/api.ts";
  * Offres visibles par l'utilisateur, choisies par le backend selon son profil.
  * onUnauthorized doit être stable (useCallback) pour ne pas relancer le chargement.
  */
-export const useOffers = (token: string, onUnauthorized: () => void) => {
+export const useOffers = (token: string, search: string, onUnauthorized: () => void) => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
+    setIsLoading(true);
+    setError(null);
 
-    getOffers(token, controller.signal)
+    getOffers(token, search, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) setOffers(data);
       })
@@ -32,7 +34,7 @@ export const useOffers = (token: string, onUnauthorized: () => void) => {
       });
 
     return () => controller.abort();
-  }, [token, onUnauthorized]);
+  }, [token, search, onUnauthorized]);
 
   return { offers, isLoading, error };
 };

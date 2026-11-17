@@ -10,6 +10,12 @@ This repo is a full-stack application for internship management, split into npm 
 
 See [README.md](README.md), [docs/architecture.md](docs/architecture.md), and [backend/API.md](backend/API.md) for the authoritative project documentation.
 
+Pour tout ajout de fonctionnalité ou correction de bug, lis et applique
+.github/skills/test-driven-development/SKILL.md avant de modifier le code
+de l’application. Écris et exécute les tests d’abord, présente-les, puis attends
+leur validation explicite avant l’implémentation. Cette règle ne concerne pas les
+demandes d’explication ou de documentation seules.
+
 ## Working commands
 
 Run from the repo root:

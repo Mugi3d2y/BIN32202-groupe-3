@@ -13,6 +13,12 @@ beforeEach(() => {
 const listOffersAs = (kind: UserKind, id: number) =>
   request(app).get("/offers").set("Authorization", tokenFor(kind, id));
 
+const searchOffersAs = (
+  kind: UserKind,
+  id: number,
+  query: { q?: string; period?: "P1" | "P2" | "OTHER" },
+) => request(app).get("/offers").query(query).set("Authorization", tokenFor(kind, id));
+
 const offerIds = (body: { id: number }[]): number[] => body.map((offer) => offer.id);
 
 describe("GET /offers : accès", () => {
@@ -98,6 +104,62 @@ describe("GET /offers : visibilité selon le profil", () => {
   });
 });
 
+describe("GET /offers : recherche EF-30", () => {
+  it("cherche une expression dans le titre sans distinguer majuscules et minuscules", async () => {
+    const response = await searchOffersAs("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ, { q: "PORTAIL CLIENT" });
+
+    expect(response.status).toBe(200);
+    expect(offerIds(response.body)).toEqual([OFFER.CLIENT_PORTAL]);
+  });
+
+  it("ignore les espaces en début et en fin de recherche", async () => {
+    const response = await searchOffersAs("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ, {
+      q: "  API REST de facturation  ",
+    });
+
+    expect(response.status).toBe(200);
+    expect(offerIds(response.body)).toEqual([OFFER.BILLING_API]);
+  });
+
+  it("traite une recherche vide comme l'absence de recherche", async () => {
+    const response = await searchOffersAs("STUDENT", STUDENT.LUCAS_DUPONT, { q: "   " });
+
+    expect(response.status).toBe(200);
+    expect(offerIds(response.body)).toEqual([
+      OFFER.INTERNAL_CHATBOT,
+      OFFER.DATA_QUALITY,
+      OFFER.FLEET_APP,
+      OFFER.BILLING_API,
+    ]);
+  });
+
+  it("retourne une liste vide sans correspondance", async () => {
+    const response = await searchOffersAs("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ, {
+      q: "texte introuvable",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
+  });
+
+  it("combine la recherche avec le filtre par période", async () => {
+    const response = await searchOffersAs("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ, {
+      q: "Module",
+      period: "P1",
+    });
+
+    expect(response.status).toBe(200);
+    expect(offerIds(response.body)).toEqual([OFFER.PDF_REPORTS]);
+  });
+
+  it("conserve les règles de visibilité avec la recherche", async () => {
+    const response = await searchOffersAs("STUDENT", STUDENT.LUCAS_DUPONT, { q: "portail" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
+  });
+});
+
 describe("POST /offers/:id/apply : EF-32", () => {
   it("crée une candidature pour une offre publiée avec un message facultatif", async () => {
     const response = await request(app)
@@ -152,6 +214,16 @@ describe("POST /offers/:id/apply : EF-32", () => {
 });
 
 describe("EF-33 : candidatures de l'étudiant", () => {
+  it("refuse l'accès à la liste des candidatures à un non-étudiant", async () => {
+    const response = await request(app)
+      .get("/applications")
+      .set("Authorization", tokenFor("CONTACT", CONTACT.MARC_LEJEUNE));
+
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("FORBIDDEN");
+    expect(response.body.error.message).toMatch(/n'avez pas accès|cette ressource/i);
+  });
+
   it("affiche les candidatures de l'étudiant avec leur statut", async () => {
     const response = await request(app)
       .get("/applications")
