@@ -1,11 +1,15 @@
 import type { Db } from "../db/database.ts";
-import type { OfferDbo, OfferStatus } from "../models/offer.ts";
+import type { OfferDbo, OfferStatus, PeriodCode } from "../models/offer.ts";
 
 export interface OfferFilter {
   /** Limite aux offres de ce statut. */
   status?: OfferStatus;
   /** Limite aux offres déposées par ce contact. */
   depositorContactId?: number;
+  /** Texte cherché dans le titre. */
+  search?: string;
+  /** Limite le résultat à une période. */
+  period?: PeriodCode;
 }
 
 export interface OfferSummary {
@@ -16,6 +20,8 @@ export interface OfferSummary {
 interface FindAllParams {
   status: OfferStatus | null;
   depositorContactId: number | null;
+  pattern: string | null;
+  period: PeriodCode | null;
 }
 
 interface ApplicationInsertParams {
@@ -23,6 +29,9 @@ interface ApplicationInsertParams {
   student_id: number;
   message: string | null;
 }
+
+// Neutralise les jokers LIKE pour rechercher l'expression saisie telle quelle.
+const escapeLike = (text: string): string => text.replace(/[\\%_]/g, (char) => `\\${char}`);
 
 export const createOffersRepository = (db: Db) => {
   const findAll = db.prepare<FindAllParams, OfferDbo>(`
@@ -37,6 +46,8 @@ export const createOffersRepository = (db: Db) => {
     JOIN periods p ON p.id = o.period_id
     WHERE (@status IS NULL OR o.status = @status)
       AND (@depositorContactId IS NULL OR o.depositor_contact_id = @depositorContactId)
+      AND (@period IS NULL OR p.code = @period)
+      AND (@pattern IS NULL OR o.title LIKE @pattern ESCAPE '\\' COLLATE NOCASE)
     ORDER BY ay.start_date DESC, o.created_at DESC
   `);
 
@@ -73,8 +84,13 @@ export const createOffersRepository = (db: Db) => {
 
   return {
     /** Offres correspondant au filtre, de la plus récente année à la plus ancienne. */
-    findAll: ({ status, depositorContactId }: OfferFilter): OfferDbo[] =>
-      findAll.all({ status: status ?? null, depositorContactId: depositorContactId ?? null }),
+    findAll: ({ status, depositorContactId, search, period }: OfferFilter): OfferDbo[] =>
+      findAll.all({
+        status: status ?? null,
+        depositorContactId: depositorContactId ?? null,
+        pattern: search === undefined ? null : `%${escapeLike(search)}%`,
+        period: period ?? null,
+      }),
     findById: (offerId: number): OfferSummary | undefined => findById.get({ id: offerId }),
     findActiveApplication: (offerId: number, studentId: number): { id: number } | undefined =>
       findActiveApplication.get({ offer_id: offerId, student_id: studentId }),

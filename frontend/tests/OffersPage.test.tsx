@@ -51,6 +51,42 @@ describe("OffersPage", () => {
     expect(screen.getByText("Toutes les offres, tous statuts confondus.")).toBeInTheDocument();
   });
 
+  it("transmet la recherche par titre à l'API en ignorant les espaces en bordure", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers": () => Response.json(offers),
+      "/api/offers?q=portail": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={contactUser} token="jeton" onUnauthorized={vi.fn()} />);
+
+    expect(await screen.findByText("Refonte du portail client")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "   portail   " },
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/offers?q=portail", expect.anything()),
+    );
+  });
+
+  it("affiche un message adapté quand aucune offre ne correspond à la recherche", async () => {
+    stubFetch({
+      "/api/offers": () => Response.json(offers),
+      "/api/offers?q=introuvable": () => Response.json([]),
+    });
+
+    render(<OffersPage user={contactUser} token="jeton" onUnauthorized={vi.fn()} />);
+
+    expect(await screen.findByText("Refonte du portail client")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "introuvable" },
+    });
+
+    expect(await screen.findByText("Aucune offre ne correspond à la recherche.")).toBeInTheDocument();
+  });
+
   it("affiche un bouton Candidater pour une offre publiée d'un étudiant", async () => {
     stubFetch({
       "/api/offers": () =>

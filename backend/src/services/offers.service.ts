@@ -1,9 +1,14 @@
 import { toOffer } from "../mappers/offer.mapper.ts";
-import type { Offer } from "../models/offer.ts";
+import type { Offer, PeriodCode } from "../models/offer.ts";
 import type { User } from "../models/user.ts";
 import type { OfferFilter, OffersRepository } from "../repositories/offers.repository.ts";
 import { HttpError } from "../utils/httpError.ts";
 import { hasContactRole, isAdmin, isStudent } from "./permissions.ts";
+
+interface OffersListFilter {
+  search?: string;
+  period?: PeriodCode;
+}
 
 /**
  * Offres visibles selon le profil (CdC § 4) : toutes pour l'administrateur, les offres
@@ -17,7 +22,14 @@ const visibilityFilter = (viewer: User): OfferFilter => {
 };
 
 export const createOffersService = (repository: OffersRepository) => ({
-  listOffers: (viewer: User): Offer[] => repository.findAll(visibilityFilter(viewer)).map(toOffer),
+  listOffers: (viewer: User, filters?: OffersListFilter): Offer[] =>
+    repository
+      .findAll({
+        ...visibilityFilter(viewer),
+        search: filters?.search,
+        period: filters?.period,
+      })
+      .map(toOffer),
   applyToOffer: (
     viewer: User,
     offerId: number,
