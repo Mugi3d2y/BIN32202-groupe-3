@@ -1,0 +1,44 @@
+- generic [ref=f3e2]:
+  - banner [ref=f3e3]:
+    - generic [ref=f3e4]: Gesta
+    - navigation "Navigation principale" [ref=f3e122]:
+      - link "Accueil" [ref=f3e123] [cursor=pointer]:
+        - /url: /
+      - link "Offres" [ref=f3e124] [cursor=pointer]:
+        - /url: /offres
+      - link "Mes candidatures" [ref=f3e125] [cursor=pointer]:
+        - /url: /mes-candidatures
+      - link "Entreprises" [ref=f3e126] [cursor=pointer]:
+        - /url: /entreprises
+    - generic [ref=f3e127]:
+      - generic [ref=f3e128]:
+        - strong [ref=f3e129]: Louis Claes
+        - generic [ref=f3e130]: Étudiant
+      - button "Changer d'utilisateur" [ref=f3e131] [cursor=pointer]
+  - note [ref=f3e5]: Mode démo — connexion sans mot de passe, réservée au développement local.
+  - main [ref=f3e6]:
+    - generic [ref=f3e136]:
+      - heading "Offres de stage" [level=1] [ref=f3e137]
+      - paragraph [ref=f3e138]: Les offres publiées.
+      - generic [ref=f3e139]:
+        - generic [ref=f3e140]: Rechercher par titre
+        - searchbox "Rechercher par titre" [active] [ref=f3e141]: CONVERSATIONNEL
+      - paragraph [ref=f3e190]: 1 offre
+      - table [ref=f3e192]:
+        - rowgroup [ref=f3e193]:
+          - row [ref=f3e194]:
+            - columnheader "Titre" [ref=f3e195]
+            - columnheader "Entreprise" [ref=f3e196]
+            - columnheader "Année" [ref=f3e197]
+            - columnheader "Période" [ref=f3e198]
+            - columnheader "Statut" [ref=f3e199]
+            - columnheader "Action" [ref=f3e200]
+        - rowgroup [ref=f3e201]:
+          - row [ref=f3e202]:
+            - cell "Assistant conversationnel interne" [ref=f3e203]
+            - cell "Nexalis" [ref=f3e204]
+            - cell "2026-2027" [ref=f3e205]
+            - cell "P2" [ref=f3e206]
+            - cell "Publiée" [ref=f3e207]
+            - cell [ref=f3e209]:
+              - button "Candidater" [ref=f3e210]
